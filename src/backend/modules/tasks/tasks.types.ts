@@ -2,8 +2,6 @@ import type { ObjectId } from 'mongodb';
 
 export type TaskBucket = string; // validated: allDay | hour:0..23
 
-// --- DB ---
-
 export type TaskDocDb = {
   _id?: ObjectId;
   day: string;
@@ -18,8 +16,6 @@ export type TaskDocDb = {
 };
 
 export type TaskDoc = TaskDocDb & { _id: ObjectId };
-
-// --- Domain / DTO ---
 
 export type Task = {
   id: string;
@@ -38,8 +34,6 @@ export type TaskDto = Omit<Task, 'createdAt' | 'updatedAt'> & {
   createdAt: string;
   updatedAt: string;
 };
-
-// --- API inputs ---
 
 export type ListTasksQuery = {
   from: string;

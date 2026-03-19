@@ -1,5 +1,5 @@
 export type Holiday = {
-  date: string; // YYYY-MM-DD
+  date: string;
   localName: string;
   name: string;
   countryCode: string;

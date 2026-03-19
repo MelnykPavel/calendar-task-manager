@@ -22,7 +22,6 @@ export const createTasksSlice: Slice<TasksSlice> = (set, get) => ({
   tasksRequest: { loading: false, error: null, inflightId: 0 },
 
   taskActions: {
-    // ── hydrateRange ──────────────────────────────────────────────────────
     hydrateRange: async ({ from, to, signal }) => {
       const nextInflight = get().tasksRequest.inflightId + 1;
       set({
@@ -80,7 +79,6 @@ export const createTasksSlice: Slice<TasksSlice> = (set, get) => ({
       }
     },
 
-    // ── create ────────────────────────────────────────────────────────────
     create: async ({ day, title, dots, allDay, timeMinutes }) => {
       const normalizedMinutes = allDay ? 0 : timeMinutes;
       const bucket = (
@@ -88,7 +86,6 @@ export const createTasksSlice: Slice<TasksSlice> = (set, get) => ({
       ) as Bucket;
       const k = bucketKey(day, bucket);
 
-      // Оптимистичная временная задача
       const tempId = `temp_${Date.now()}` as TaskId;
       const tempTask: Task = {
         id: tempId,
@@ -123,7 +120,6 @@ export const createTasksSlice: Slice<TasksSlice> = (set, get) => ({
           timeMinutes: normalizedMinutes,
         });
 
-        // Заменяем temp → реальная задача
         set((s) => {
           const realK = bucketKey(created.day, created.bucket as Bucket);
 
@@ -133,7 +129,6 @@ export const createTasksSlice: Slice<TasksSlice> = (set, get) => ({
           const bucketByTaskId = { ...s.bucketByTaskId, [created.id]: realK };
           delete bucketByTaskId[tempId];
 
-          // Убираем tempId, вставляем реальный id, сортируем по order
           const withoutTemp = removeFromArray(
             s.orderByBucket[realK] ?? [],
             tempId,
@@ -157,7 +152,6 @@ export const createTasksSlice: Slice<TasksSlice> = (set, get) => ({
 
         return created;
       } catch (err) {
-        // Rollback — убираем временную задачу
         set((s) => {
           const entities = { ...s.entities };
           delete entities[tempId];
@@ -181,7 +175,6 @@ export const createTasksSlice: Slice<TasksSlice> = (set, get) => ({
       }
     },
 
-    // ── update ────────────────────────────────────────────────────────────
     update: async (id, patch) => {
       const updated = await updateTask(id, patch);
 
@@ -226,7 +219,6 @@ export const createTasksSlice: Slice<TasksSlice> = (set, get) => ({
       return updated;
     },
 
-    // ── remove ────────────────────────────────────────────────────────────
     remove: async (id) => {
       await deleteTask(id);
 
@@ -259,7 +251,6 @@ export const createTasksSlice: Slice<TasksSlice> = (set, get) => ({
       });
     },
 
-    // ── _applyMove ────────────────────────────────────────────────────────
     _applyMove: (moved, fromBucketKey, toBucketKey, toIndex) => {
       set((s) => {
         const entities = {

@@ -1,14 +1,20 @@
-import { fetchPublicHolidays, NagerError } from '../../integrations/nager/nager.client';
+import {
+  fetchPublicHolidays,
+  NagerError,
+} from '../../integrations/nager/nager.client';
 import { ApiError } from '../../utils/api-error';
 
 export type HolidayDto = {
-  date: string; // YYYY-MM-DD
+  date: string;
   localName: string;
   name: string;
   countryCode: string;
 };
 
-async function fetchFromNager(country: string, year: number): Promise<HolidayDto[]> {
+async function fetchFromNager(
+  country: string,
+  year: number,
+): Promise<HolidayDto[]> {
   const raw = await fetchPublicHolidays({ year, countryCode: country });
   return raw
     .map((h) => ({
@@ -20,7 +26,10 @@ async function fetchFromNager(country: string, year: number): Promise<HolidayDto
     .sort((a, b) => a.date.localeCompare(b.date));
 }
 
-export async function getHolidaysService(input: { country: string; year: number }): Promise<HolidayDto[]> {
+export async function getHolidaysService(input: {
+  country: string;
+  year: number;
+}): Promise<HolidayDto[]> {
   try {
     return await fetchFromNager(input.country, input.year);
   } catch (err) {

@@ -1,14 +1,14 @@
 export type Task = {
   id: string;
-  day: string; // YYYY-MM-DD
-  bucket: string; // allDay | hour:0..23
+  day: string;
+  bucket: string;
   title: string;
   order: number;
   dots: string[];
   allDay: boolean;
-  timeMinutes: number; // 0..1439
-  createdAt: string; // ISO
-  updatedAt: string; // ISO
+  timeMinutes: number;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type CreateTaskBody = {

@@ -43,30 +43,15 @@ export default function TaskTitle({ text }: { text: string }) {
   const parts = useMemo(() => {
     if (!query) return [{ value: text, match: false }];
 
-    const lowerText = text.toLowerCase();
     const lowerQuery = query.toLowerCase();
-    const tokens: Array<{ value: string; match: boolean }> = [];
-    let cursor = 0;
 
-    while (cursor < text.length) {
-      const matchIndex = lowerText.indexOf(lowerQuery, cursor);
-      if (matchIndex === -1) {
-        tokens.push({ value: text.slice(cursor), match: false });
-        break;
-      }
-
-      if (matchIndex > cursor) {
-        tokens.push({ value: text.slice(cursor, matchIndex), match: false });
-      }
-
-      tokens.push({
-        value: text.slice(matchIndex, matchIndex + lowerQuery.length),
-        match: true,
-      });
-      cursor = matchIndex + lowerQuery.length;
-    }
-
-    return tokens.length > 0 ? tokens : [{ value: text, match: false }];
+    return text
+      .split(new RegExp(`(${lowerQuery})`, 'i'))
+      .filter(Boolean)
+      .map((part) => ({
+        value: part,
+        match: part.toLowerCase() === lowerQuery,
+      }));
   }, [query, text]);
 
   return (

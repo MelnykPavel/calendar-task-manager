@@ -9,7 +9,6 @@ export function createLRUMap<K, V>(maxSize: number): LRUMap<K, V> {
   return {
     get: (k) => map.get(k),
     set: (k, v) => {
-      // Delete before re-inserting to refresh LRU order
       if (map.has(k)) map.delete(k);
       else if (map.size >= maxSize) map.delete(map.keys().next().value!);
       map.set(k, v);

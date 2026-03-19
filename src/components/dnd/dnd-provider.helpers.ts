@@ -12,10 +12,6 @@ import {
   parseBucketKey,
 } from '@/src/lib/store/utils/bucket';
 
-type DndSnapshot = {
-  orderByBucket: Record<string, string[] | undefined>;
-};
-
 export const MOUSE_SENSOR_OPTIONS = { activationConstraint: { distance: 5 } };
 export const TOUCH_SENSOR_OPTIONS = {
   activationConstraint: { delay: 160, tolerance: 8 },

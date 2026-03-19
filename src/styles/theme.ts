@@ -1,4 +1,3 @@
-// styles/theme.ts
 const base = {
   radii: {
     sm: '6px',
@@ -29,10 +28,8 @@ const base = {
   },
 } as const;
 
-// helper для border
 const border = (color: string, width = 1) => `${width}px solid ${color}`;
 
-// общий тип цветов
 export type ThemeColors = {
   ink: string;
   inkMuted: string;
@@ -57,13 +54,11 @@ export type ThemeColors = {
   danger: string;
 };
 
-// общий тип темы
 export type ThemeBase = typeof base & {
   colors: ThemeColors;
   borders: Record<string, string>;
 };
 
-// Light theme
 const lightTheme: ThemeBase = {
   ...base,
   colors: {
@@ -92,7 +87,6 @@ const lightTheme: ThemeBase = {
   borders: {} as Record<string, string>,
 };
 
-// Dark theme
 const darkTheme: ThemeBase = {
   ...base,
   colors: {
@@ -121,7 +115,6 @@ const darkTheme: ThemeBase = {
   borders: {} as Record<string, string>,
 };
 
-// функция для добавления border
 function attachBorders(theme: ThemeBase) {
   return {
     ...theme,
@@ -134,11 +127,9 @@ function attachBorders(theme: ThemeBase) {
   };
 }
 
-// экспорт тем с borders
 export const themes: Record<'light' | 'dark', ThemeBase> = {
   light: attachBorders(lightTheme),
   dark: attachBorders(darkTheme),
 };
 
-// тип для текущей темы
 export type AppTheme = ThemeBase;

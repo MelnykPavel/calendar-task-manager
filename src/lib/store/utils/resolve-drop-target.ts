@@ -9,15 +9,21 @@ import type {
 } from '@/src/lib/dnd/ids';
 
 function isDayDropData(data: unknown): data is DayDropData {
-  return !!data && typeof data === 'object' && (data as DayDropData).type === 'day';
+  return (
+    !!data && typeof data === 'object' && (data as DayDropData).type === 'day'
+  );
 }
 
 function isHourDropData(data: unknown): data is HourDropData {
-  return !!data && typeof data === 'object' && (data as HourDropData).type === 'hour';
+  return (
+    !!data && typeof data === 'object' && (data as HourDropData).type === 'hour'
+  );
 }
 
 function isTaskDragData(data: unknown): data is TaskDragData {
-  return !!data && typeof data === 'object' && (data as TaskDragData).type === 'task';
+  return (
+    !!data && typeof data === 'object' && (data as TaskDragData).type === 'task'
+  );
 }
 
 export type DropTarget = {
@@ -25,14 +31,6 @@ export type DropTarget = {
   toIndex: number;
 };
 
-/**
- * Чистая функция — определяет целевой бакет и индекс по over-событию dnd-kit.
- *
- * Читает позицию target-задачи из snapshot (не из текущего AppStore),
- * потому что AppStore не мутируется во время drag.
- *
- * Возвращает null если over не является валидным drop-таргетом.
- */
 export function resolveDropTarget(
   over: Over,
   snapshot: DndSnapshot | null,
@@ -69,7 +67,6 @@ export function resolveDropTarget(
 
     if (!snapshot) return null;
 
-    // Позицию target-задачи читаем из snapshot — он не менялся во время drag
     const targetBucketKey = snapshot.bucketByTaskId[data.taskId];
     if (!targetBucketKey) return null;
 
