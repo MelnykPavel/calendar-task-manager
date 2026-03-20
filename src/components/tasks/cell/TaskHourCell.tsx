@@ -10,6 +10,7 @@ import TaskDayCellHeader from '@/src/components/tasks/cell/TaskDayCellHeader';
 import HolidaysList from '@/src/components/holidays/HolidaysList';
 import TaskDayCellTaskList from '@/src/components/tasks/cell/TaskDayCellTaskList';
 import TaskEditorPanel from '@/src/components/tasks/editor/TaskEditorPanel';
+import NowLine from '@/src/components/calendar/NowLine';
 import { taskHourCellStyles as styles } from '@/src/components/tasks/cell/task-hour-cell.styles';
 
 import { useAppStore } from '@/src/lib/store/app.store';
@@ -34,12 +35,10 @@ import { useDayTasks } from '@/src/hooks/useDayTasks';
 function TaskHourCell({
   day,
   hour,
-  nowMinutes = 0,
   isLastColumn = false,
 }: {
   day: WeekDay;
   hour?: number;
-  nowMinutes?: number;
   isLastColumn?: boolean;
 }) {
   const isAllDay = hour === undefined;
@@ -61,8 +60,14 @@ function TaskHourCell({
     () => selectEditorCreatePropsForDay(day.dayKey),
     [day.dayKey],
   );
-  const selectHolidayTexts = useMemo(() => selectHolidayTextsForDay(day.dayKey), [day.dayKey]);
-  const selectEditingTask = useMemo(() => selectEditingTaskForCell(day.dayKey, hour), [day.dayKey, hour]);
+  const selectHolidayTexts = useMemo(
+    () => selectHolidayTextsForDay(day.dayKey),
+    [day.dayKey],
+  );
+  const selectEditingTask = useMemo(
+    () => selectEditingTaskForCell(day.dayKey, hour),
+    [day.dayKey, hour],
+  );
   const selectViewingTask = useMemo(
     () => selectViewingTaskForCell(day.dayKey, hour),
     [day.dayKey, hour],
@@ -76,17 +81,22 @@ function TaskHourCell({
 
   const dayTasks = useDayTasks(day.dayKey);
   const tasks = useMemo(
-    () => (isAllDay ? dayTasks.allDay : dayTasks.hours[hour ?? 0] ?? []),
+    () => (isAllDay ? dayTasks.allDay : (dayTasks.hours[hour ?? 0] ?? [])),
     [dayTasks, hour, isAllDay],
   );
 
-  const visibleTasks = useMemo(() => (editingTask ? tasks.filter((task) => task.id !== editingTask.id) : tasks), [editingTask, tasks]);
+  const visibleTasks = useMemo(
+    () =>
+      editingTask ? tasks.filter((task) => task.id !== editingTask.id) : tasks,
+    [editingTask, tasks],
+  );
 
-  const showNowLine = !isAllDay && day.isToday && Math.floor(nowMinutes / 60) === hour;
-  const nowLineTop = `${((nowMinutes % 60) / 60) * 100}%`;
   const preferOverlayUpward = !isAllDay && (hour ?? 0) >= 20;
+
   const expandedHeight = useMemo(() => {
-    const baseHeight = isAllDay ? CALENDAR_ALL_DAY_HEIGHT : CALENDAR_CELL_HEIGHT;
+    const baseHeight = isAllDay
+      ? CALENDAR_ALL_DAY_HEIGHT
+      : CALENDAR_CELL_HEIGHT;
     const holidayHeight = isAllDay
       ? holidayTexts.length * HOLIDAY_LINE_VISUAL_HEIGHT
       : 0;
@@ -107,7 +117,9 @@ function TaskHourCell({
         ? theme.colors.allDayBg
         : theme.colors.cellBg,
       ['--cell-border-bottom' as string]: theme.borders.default,
-      ['--cell-border-right' as string]: isLastColumn ? 'none' : theme.borders.default,
+      ['--cell-border-right' as string]: isLastColumn
+        ? 'none'
+        : theme.borders.default,
       zIndex: isEditorOpen || Boolean(viewingTask) ? 14 : undefined,
     }),
     [
@@ -124,7 +136,9 @@ function TaskHourCell({
 
   const content = (
     <div css={styles.cell} style={cellVars}>
-      {showNowLine && <div css={styles.nowLine} style={{ top: nowLineTop }} />}
+      {!isAllDay && day.isToday && hour !== undefined && (
+        <NowLine hour={hour} />
+      )}
 
       <TaskDayCellHeader
         dateNumber={day.dateNumber}
@@ -169,11 +183,22 @@ function TaskHourCell({
   );
 
   return isAllDay ? (
-    <DroppableDay dayKey={day.dayKey} css={styles.droppable} expandedHeight={expandedHeight} expandUpward={false}>
+    <DroppableDay
+      dayKey={day.dayKey}
+      css={styles.droppable}
+      expandedHeight={expandedHeight}
+      expandUpward={false}
+    >
       {content}
     </DroppableDay>
   ) : (
-    <DroppableHour dayKey={day.dayKey} hour={hour ?? 0} css={styles.droppable} expandedHeight={expandedHeight} expandUpward={preferOverlayUpward}>
+    <DroppableHour
+      dayKey={day.dayKey}
+      hour={hour ?? 0}
+      css={styles.droppable}
+      expandedHeight={expandedHeight}
+      expandUpward={preferOverlayUpward}
+    >
       {content}
     </DroppableHour>
   );

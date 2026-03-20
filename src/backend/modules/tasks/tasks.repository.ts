@@ -78,22 +78,36 @@ export async function createTask(input: CreateTaskBody): Promise<Task> {
   const allDay = input.allDay ?? true;
   const timeMinutes = allDay ? 0 : input.timeMinutes;
   const bucket = bucketFrom(allDay, timeMinutes);
-  const order = await nextOrderForBucket(input.day, bucket, collection);
 
-  const doc: Omit<TaskDocDb, '_id'> = {
-    day: input.day,
-    bucket,
-    title: input.title,
-    order,
-    dots: input.dots ?? [],
-    allDay,
-    timeMinutes,
-    createdAt: now,
-    updatedAt: now,
-  };
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const order = await nextOrderForBucket(input.day, bucket, collection);
 
-  const res = await collection.insertOne(doc);
-  return mapTask({ ...doc, _id: res.insertedId } as TaskDoc);
+    const doc: Omit<TaskDocDb, '_id'> = {
+      day: input.day,
+      bucket,
+      title: input.title,
+      order,
+      dots: input.dots ?? [],
+      allDay,
+      timeMinutes,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    try {
+      const res = await collection.insertOne(doc);
+      return mapTask({ ...doc, _id: res.insertedId } as TaskDoc);
+    } catch (err) {
+      if (!isDuplicateKeyError(err) || attempt === 2) throw err;
+      await rebalanceBucket(input.day, bucket, collection);
+    }
+  }
+
+  throw new ApiError({
+    code: 'CREATE_FAILED',
+    message: 'Failed to create task',
+    status: 500,
+  });
 }
 
 export async function getTaskById(id: string): Promise<Task | null> {
@@ -116,12 +130,15 @@ export async function listTasks(input: ListTasksQuery): Promise<Task[]> {
 
   const docs = await collection
     .find(filter)
-    .sort({ day: 1, bucket: 1, order: 1, _id: 1 })
+    .sort({ day: 1, order: 1, _id: 1 })
     .toArray();
   return docs.map((d) => mapTask(d as TaskDoc));
 }
 
-export async function updateTask(id: string, patch: UpdateTaskBody): Promise<Task | null> {
+export async function updateTask(
+  id: string,
+  patch: UpdateTaskBody,
+): Promise<Task | null> {
   const collection = await tasksCollection();
   const existing = await collection.findOne({ _id: toObjectId(id) });
   if (!existing) return null;
@@ -207,7 +224,10 @@ async function rebalanceBucket(
   );
 }
 
-export async function moveTask(id: string, input: MoveTaskBody): Promise<Task | null> {
+export async function moveTask(
+  id: string,
+  input: MoveTaskBody,
+): Promise<Task | null> {
   const collection = await tasksCollection();
   const taskObjectId = toObjectId(id);
 
@@ -238,7 +258,9 @@ export async function moveTask(id: string, input: MoveTaskBody): Promise<Task | 
   let beforeDoc = beforeObjectId
     ? await collection.findOne({ _id: beforeObjectId })
     : null;
-  let afterDoc = afterObjectId ? await collection.findOne({ _id: afterObjectId }) : null;
+  let afterDoc = afterObjectId
+    ? await collection.findOne({ _id: afterObjectId })
+    : null;
 
   if (beforeObjectId && !beforeDoc) {
     throw new ApiError({
@@ -322,8 +344,10 @@ export async function moveTask(id: string, input: MoveTaskBody): Promise<Task | 
 
     if (newOrder === null) {
       await rebalanceBucket(toDay, toBucket, collection);
-      if (beforeObjectId) beforeDoc = await collection.findOne({ _id: beforeObjectId });
-      if (afterObjectId) afterDoc = await collection.findOne({ _id: afterObjectId });
+      if (beforeObjectId)
+        beforeDoc = await collection.findOne({ _id: beforeObjectId });
+      if (afterObjectId)
+        afterDoc = await collection.findOne({ _id: afterObjectId });
       continue;
     }
 
@@ -348,10 +372,16 @@ export async function moveTask(id: string, input: MoveTaskBody): Promise<Task | 
     } catch (err) {
       if (!isDuplicateKeyError(err) || attempt === 2) throw err;
       await rebalanceBucket(toDay, toBucket, collection);
-      if (beforeObjectId) beforeDoc = await collection.findOne({ _id: beforeObjectId });
-      if (afterObjectId) afterDoc = await collection.findOne({ _id: afterObjectId });
+      if (beforeObjectId)
+        beforeDoc = await collection.findOne({ _id: beforeObjectId });
+      if (afterObjectId)
+        afterDoc = await collection.findOne({ _id: afterObjectId });
     }
   }
 
-  throw new ApiError({ code: 'MOVE_FAILED', message: 'Failed to move task', status: 500 });
+  throw new ApiError({
+    code: 'MOVE_FAILED',
+    message: 'Failed to move task',
+    status: 500,
+  });
 }

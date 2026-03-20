@@ -53,8 +53,9 @@ export function minutesToTime(minutes: number): string {
 }
 
 export function timeToMinutes(time: string): number {
+  if (!isValidTimeString(time)) return 0;
   const [h, m] = time.split(':').map(Number);
-  return h * 60 + m;
+  return (h ?? 0) * 60 + (m ?? 0);
 }
 
 export function isValidTimeMinutes(minutes: number): boolean {

@@ -21,6 +21,7 @@ import { resolveDropTarget } from '@/src/lib/store/utils/resolve-drop-target';
 import TaskDragOverlay from './TaskDragOverlay';
 import {
   getDragPointer,
+  collisionDetection,
   isPointInsideBaseDrop,
   isPointInsideExpandedDrop,
   isTaskDragData,
@@ -28,6 +29,7 @@ import {
   resolveDropTargetFromPoint,
   TOUCH_SENSOR_OPTIONS,
 } from './dnd-provider.helpers';
+
 import { useDndMotionQueues } from '@/src/hooks/useDndMotionQueues';
 
 export default function DndProvider({
@@ -180,7 +182,8 @@ export default function DndProvider({
   return (
     <DndContext
       sensors={sensors}
-      collisionDetection={rectIntersection}
+      collisionDetection={collisionDetection}
+      autoScroll={false}
       onDragStart={handleDragStart}
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}

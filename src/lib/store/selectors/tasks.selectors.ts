@@ -45,24 +45,11 @@ export function selectDayTasks(dayKey: string) {
   };
 }
 
-export function selectDayFlatTasks(dayKey: string) {
-  const select = selectDayTasks(dayKey);
-  let cachedFlat: Task[] | null = null;
-  let cachedDayTasks: DayTasks | null = null;
-
-  return (s: AppState): Task[] => {
-    const dayTasks = select(s);
-    if (dayTasks === cachedDayTasks && cachedFlat) return cachedFlat;
-
-    cachedDayTasks = dayTasks;
-    cachedFlat = [dayTasks.allDay, ...dayTasks.hours].flat();
-    return cachedFlat;
-  };
-}
-
 export function selectWeekTasks(dayKeys: string[]) {
   const key = dayKeys.join(',');
-  const daySelectors = dayKeys.map((dayKey) => [dayKey, selectDayTasks(dayKey)] as const);
+  const daySelectors = dayKeys.map(
+    (dayKey) => [dayKey, selectDayTasks(dayKey)] as const,
+  );
 
   return (s: AppState) => {
     const q = selectSearchQuery(s);
@@ -71,7 +58,9 @@ export function selectWeekTasks(dayKeys: string[]) {
     for (const dayKey of dayKeys) {
       sigParts.push(String(s.bucketRev[bucketKey(dayKey, 'allDay')] ?? 0));
       for (let hour = 0; hour < 24; hour += 1) {
-        sigParts.push(String(s.bucketRev[bucketKey(dayKey, `hour:${hour}`)] ?? 0));
+        sigParts.push(
+          String(s.bucketRev[bucketKey(dayKey, `hour:${hour}`)] ?? 0),
+        );
       }
     }
 

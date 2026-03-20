@@ -21,10 +21,8 @@ export default function TaskDragOverlay() {
     })),
   );
 
-  if (typeof document === 'undefined') return null;
-
-  return createPortal(
-    <DragOverlay adjustScale={false} dropAnimation={DROP_ANIMATION}>
+  const overlay = (
+    <DragOverlay adjustScale={false} dropAnimation={DROP_ANIMATION} zIndex={50}>
       {activeTask && !touchDragging ? (
         <TaskCardSurface
           task={activeTask}
@@ -36,7 +34,9 @@ export default function TaskDragOverlay() {
           }}
         />
       ) : null}
-    </DragOverlay>,
-    document.body,
+    </DragOverlay>
   );
+
+  if (typeof document === 'undefined') return overlay;
+  return createPortal(overlay, document.body);
 }

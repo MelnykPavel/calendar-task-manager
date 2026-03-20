@@ -2,7 +2,7 @@
 
 import { css, useTheme } from '@emotion/react';
 import { AlertTriangle, Info, Loader2, RotateCcw } from 'lucide-react';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
 import {
@@ -84,6 +84,15 @@ export default function StatusBar() {
     })),
   );
 
+  const retryControllerRef = useRef<AbortController | null>(null);
+
+  useEffect(
+    () => () => {
+      retryControllerRef.current?.abort();
+    },
+    [],
+  );
+
   const themeVars = useMemo(
     () => ({
       ['--color-danger' as string]: theme.colors.danger,
@@ -127,7 +136,15 @@ export default function StatusBar() {
         <button
           type="button"
           onClick={() => {
-            void hydrateRange({ from: range.from, to: range.to });
+            retryControllerRef.current?.abort();
+            const controller = new AbortController();
+            retryControllerRef.current = controller;
+
+            void hydrateRange({
+              from: range.from,
+              to: range.to,
+              signal: controller.signal,
+            });
             for (const year of years) {
               void refetchHolidays(year, countryCode);
             }

@@ -45,12 +45,16 @@ export default function DraggableTask({
     id: taskDragId(taskId),
     data,
     disabled: Boolean(disabled),
+    transition: {
+      duration: 200,
+      easing: 'cubic-bezier(0.25, 1, 0.5, 1)',
+    },
   });
 
   const style = useMemo<React.CSSProperties>(
     () => ({
       transform: CSS.Transform.toString(transform),
-      transition: transition ?? 'transform 200ms ease',
+      transition,
     }),
     [transform, transition],
   );

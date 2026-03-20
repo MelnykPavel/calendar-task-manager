@@ -42,10 +42,15 @@ export type VisibleRange = {
   to: string;
 };
 
-const todayKey =
-  typeof window === 'undefined' ? '' : formatDate(new Date(), 'YYYY-MM-DD');
-const thisMonthKey =
-  typeof window === 'undefined' ? '' : formatDate(new Date(), 'YYYY-MM');
+function getTodayKey(): string {
+  return typeof window === 'undefined'
+    ? ''
+    : formatDate(new Date(), 'YYYY-MM-DD');
+}
+
+function getThisMonthKey(): string {
+  return typeof window === 'undefined' ? '' : formatDate(new Date(), 'YYYY-MM');
+}
 
 let visibleRangeCache: { key: string; value: VisibleRange } | undefined;
 let visibleYearsCache: { key: string; value: number[] } | undefined;
@@ -68,6 +73,7 @@ export function selectMonth(s: AppState): Month {
   const from = formatDate(grid.start, 'YYYY-MM-DD');
   const to = formatDate(grid.end, 'YYYY-MM-DD');
 
+  const todayKey = getTodayKey();
   const days: MonthDay[] = grid.days.map((day) => ({
     dayKey: day.key,
     dateNumber: day.date.date(),
@@ -103,6 +109,7 @@ export function selectWeek(s: AppState): Week {
   const from = formatDate(week.start, 'YYYY-MM-DD');
   const to = formatDate(week.end, 'YYYY-MM-DD');
 
+  const todayKey = getTodayKey();
   const days: WeekDay[] = week.days.map((day, index) => ({
     dayKey: day.key,
     label: weekLabels[index] ?? '',
@@ -163,8 +170,9 @@ export function selectVisibleLabel(s: AppState): string {
 }
 
 export function selectIsCurrentPeriod(s: AppState): boolean {
-  if (s.viewMode === 'month') return s.monthKey === thisMonthKey;
+  if (s.viewMode === 'month') return s.monthKey === getThisMonthKey();
 
   const week = selectWeek(s);
+  const todayKey = getTodayKey();
   return todayKey >= week.from && todayKey <= week.to;
 }
