@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { DM_Mono, DM_Sans, Syne } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 
 import Providers from "./providers";
 import "./globals.css";
@@ -53,6 +54,7 @@ export default async function RootLayout({
     >
       <body className={`${syne.variable} ${dmSans.variable} ${dmMono.variable}`}>
         <Providers initialThemeMode={initialThemeMode}>{children}</Providers>
+        <Analytics />
       </body>
     </html>
   );
