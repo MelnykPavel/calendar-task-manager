@@ -7,16 +7,13 @@ import type { DndSnapshot, DndPending } from './types/dnd.types';
 import { parseBucketKey, normalizeTimeForBucket } from './utils/bucket';
 import { removeFromArray, insertIntoArray } from './utils/task-order';
 
-function getAppStore() {
-  return useAppStore;
-}
-
 type DndState = {
   activeTask: Task | null;
   touchDragging: boolean;
   overlayWidth: number;
   snapshot: DndSnapshot | null;
   pending: DndPending | null;
+  commitVersion: number;
 };
 
 type DndStore = DndState & {
@@ -39,6 +36,7 @@ const INITIAL: DndState = {
   overlayWidth: 200,
   snapshot: null,
   pending: null,
+  commitVersion: 0,
 };
 
 export const useDndStore = create<DndStore>()((set, get) => ({
@@ -46,7 +44,7 @@ export const useDndStore = create<DndStore>()((set, get) => ({
 
   dndActions: {
     startDrag: (taskId, width, isTouch) => {
-      const appState = getAppStore().getState();
+      const appState = useAppStore.getState();
 
       set({
         activeTask: appState.entities[taskId] ?? null,
@@ -58,6 +56,7 @@ export const useDndStore = create<DndStore>()((set, get) => ({
           bucketByTaskId: appState.bucketByTaskId,
         },
         pending: null,
+        commitVersion: get().commitVersion + 1,
       });
     },
 
@@ -76,8 +75,10 @@ export const useDndStore = create<DndStore>()((set, get) => ({
 
         const fromBucketKey = snapshot.bucketByTaskId[taskId];
         if (!fromBucketKey) return s;
-        const fromIds = snapshot.orderByBucket[fromBucketKey] ?? [];
-        const fromIndex = fromIds.indexOf(taskId);
+
+        const fromIndex = (snapshot.orderByBucket[fromBucketKey] ?? []).indexOf(
+          taskId,
+        );
 
         const { day: toDay, bucket: toBucket } = parseBucketKey(toBucketKey);
 
@@ -121,7 +122,7 @@ export const useDndStore = create<DndStore>()((set, get) => ({
     },
 
     commitMove: async () => {
-      const { pending, snapshot } = get();
+      const { pending, snapshot, commitVersion } = get();
       if (!pending) {
         get().dndActions._clear();
         return;
@@ -138,7 +139,7 @@ export const useDndStore = create<DndStore>()((set, get) => ({
         afterId,
       } = pending;
 
-      const appStore = getAppStore();
+      const appStore = useAppStore;
       const currentTask = appStore.getState().entities[taskId];
 
       if (currentTask) {
@@ -158,14 +159,13 @@ export const useDndStore = create<DndStore>()((set, get) => ({
           );
       }
 
-      set((s) => ({ ...s, activeTask: null, touchDragging: false }));
       get().dndActions._clear();
+
       const originalIndex =
         snapshot?.orderByBucket[fromBucketKey]?.indexOf(taskId) ?? -1;
 
       const noChange =
         fromBucketKey === toBucketKey && originalIndex === toIndex;
-
       if (noChange) {
         if (currentTask) {
           appStore
@@ -179,6 +179,7 @@ export const useDndStore = create<DndStore>()((set, get) => ({
         }
         return;
       }
+
       try {
         const moved = await moveTask(taskId, {
           toDay,
@@ -187,12 +188,16 @@ export const useDndStore = create<DndStore>()((set, get) => ({
           afterId,
         });
 
+        if (get().commitVersion !== commitVersion) return;
+
         appStore
           .getState()
           .taskActions._applyMove(moved, toBucketKey, toBucketKey, toIndex);
       } catch (err) {
+        if (get().commitVersion !== commitVersion) return;
+
         if (snapshot && currentTask) {
-          const originalIndex =
+          const originalIdx =
             snapshot.orderByBucket[fromBucketKey]?.indexOf(taskId) ?? 0;
           appStore
             .getState()
@@ -200,7 +205,7 @@ export const useDndStore = create<DndStore>()((set, get) => ({
               currentTask,
               toBucketKey,
               fromBucketKey,
-              originalIndex,
+              originalIdx,
             );
         }
 
@@ -214,7 +219,6 @@ export const useDndStore = create<DndStore>()((set, get) => ({
     },
 
     rollback: () => get().dndActions._clear(),
-
-    _clear: () => set(INITIAL),
+    _clear: () => set((s) => ({ ...INITIAL, commitVersion: s.commitVersion })),
   },
 }));

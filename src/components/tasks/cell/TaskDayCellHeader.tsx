@@ -53,8 +53,6 @@ const styles = {
   }),
 };
 
-const TODAY = formatDate(new Date(), 'YYYY-MM-DD');
-
 export default function TaskDayCellHeader({
   dateNumber,
   dayKey,
@@ -71,7 +69,9 @@ export default function TaskDayCellHeader({
   onAddTask: () => void;
 }) {
   const theme = useTheme();
-  const isToday = dayKey === TODAY;
+
+  // Вычисляем при каждом рендере — корректно работает через полночь
+  const isToday = dayKey === formatDate(new Date(), 'YYYY-MM-DD');
 
   const dateColor = inMonth
     ? isWeekend

@@ -39,10 +39,10 @@ export default function TaskEditorPanel({
         onEdit={() => useAppStore.getState().uiActions.openEdit(viewingTask.id)}
         onDelete={async () => {
           if (!window.confirm('Delete this task?')) return;
-          await useAppStore.getState().taskActions.remove(viewingTask.id).catch(() => {
-            return undefined;
-          });
-          onClose();
+          try {
+            await useAppStore.getState().taskActions.remove(viewingTask.id);
+            onClose();
+          } catch {}
         }}
       />
     );
@@ -58,7 +58,9 @@ export default function TaskEditorPanel({
       initialDay={editingTask?.day}
       initialDots={editingTask?.dots}
       initialAllDay={editingTask?.allDay ?? editorProps.initialAllDay}
-      initialTimeMinutes={editingTask?.timeMinutes ?? editorProps.initialTimeMinutes}
+      initialTimeMinutes={
+        editingTask?.timeMinutes ?? editorProps.initialTimeMinutes
+      }
       showDay={Boolean(editingTask)}
       onCancel={onClose}
       onSubmit={async (input) => {

@@ -27,6 +27,10 @@ const styles = {
   }),
 };
 
+function escapeRegex(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 export default function TaskTitle({ text }: { text: string }) {
   const theme = useTheme();
   const query = useAppStore(selectSearchQuery);
@@ -44,9 +48,10 @@ export default function TaskTitle({ text }: { text: string }) {
     if (!query) return [{ value: text, match: false }];
 
     const lowerQuery = query.toLowerCase();
+    const escaped = escapeRegex(lowerQuery);
 
     return text
-      .split(new RegExp(`(${lowerQuery})`, 'i'))
+      .split(new RegExp(`(${escaped})`, 'i'))
       .filter(Boolean)
       .map((part) => ({
         value: part,

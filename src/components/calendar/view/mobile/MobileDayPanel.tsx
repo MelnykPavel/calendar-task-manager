@@ -27,11 +27,7 @@ type EditorSubmitInput = {
   timeMinutes: number;
 };
 
-export default function MobileDayPanel({
-  dayKey,
-}: {
-  dayKey: string;
-}) {
+export default function MobileDayPanel({ dayKey }: { dayKey: string }) {
   const { closeEditor, createTask, dndDisabled, openCreate } = useAppStore(
     useShallow((state) => ({
       closeEditor: state.uiActions.closeEditor,
@@ -41,11 +37,26 @@ export default function MobileDayPanel({
     })),
   );
 
-  const selectHolidayTexts = useMemo(() => selectHolidayTextsForDay(dayKey), [dayKey]);
-  const selectIsOpen = useMemo(() => selectIsEditorOpenForDay(dayKey), [dayKey]);
-  const selectEditorProps = useMemo(() => selectEditorCreatePropsForDay(dayKey), [dayKey]);
-  const selectEditingTask = useMemo(() => selectEditingTaskForDay(dayKey), [dayKey]);
-  const selectViewingTask = useMemo(() => selectViewingTaskForDay(dayKey), [dayKey]);
+  const selectHolidayTexts = useMemo(
+    () => selectHolidayTextsForDay(dayKey),
+    [dayKey],
+  );
+  const selectIsOpen = useMemo(
+    () => selectIsEditorOpenForDay(dayKey),
+    [dayKey],
+  );
+  const selectEditorProps = useMemo(
+    () => selectEditorCreatePropsForDay(dayKey),
+    [dayKey],
+  );
+  const selectEditingTask = useMemo(
+    () => selectEditingTaskForDay(dayKey),
+    [dayKey],
+  );
+  const selectViewingTask = useMemo(
+    () => selectViewingTaskForDay(dayKey),
+    [dayKey],
+  );
 
   const holidayTexts = useAppStore(selectHolidayTexts);
   const isEditorOpen = useAppStore(selectIsOpen);
@@ -54,13 +65,20 @@ export default function MobileDayPanel({
   const viewingTask = useAppStore(selectViewingTask);
 
   const dayTasks = useDayTasks(dayKey);
-  const tasks = useMemo(() => [dayTasks.allDay, ...dayTasks.hours].flat(), [dayTasks]);
+  const tasks = useMemo(
+    () => [dayTasks.allDay, ...dayTasks.hours].flat(),
+    [dayTasks],
+  );
   const visibleTasks = useMemo(
-    () => (editingTask ? tasks.filter((task) => task.id !== editingTask.id) : tasks),
+    () =>
+      editingTask ? tasks.filter((task) => task.id !== editingTask.id) : tasks,
     [editingTask, tasks],
   );
 
-  const selectedLabel = useMemo(() => (dayKey ? formatDate(dayKey, 'dddd, MMM D') : ''), [dayKey]);
+  const selectedLabel = useMemo(
+    () => (dayKey ? formatDate(dayKey, 'dddd, MMM D') : ''),
+    [dayKey],
+  );
   const selectedMeta = `${tasks.length} task${tasks.length === 1 ? '' : 's'}`;
 
   const handleCreateTask = async (input: EditorSubmitInput) => {
@@ -81,7 +99,11 @@ export default function MobileDayPanel({
           <div css={styles.panelMeta}>{selectedMeta}</div>
         </div>
 
-        <button type="button" css={styles.addButton} onClick={() => openCreate(dayKey)}>
+        <button
+          type="button"
+          css={styles.addButton}
+          onClick={() => openCreate(dayKey)}
+        >
           <Plus size={14} />
           Add
         </button>
@@ -96,13 +118,18 @@ export default function MobileDayPanel({
       )}
 
       <div css={styles.tasksArea}>
-        {visibleTasks.length > 0 ? (
-          <DroppableDay dayKey={dayKey}>
-            <TaskDayCellTaskList tasks={visibleTasks} dndDisabled={dndDisabled} />
-          </DroppableDay>
-        ) : (
-          <div css={styles.emptyState}>No tasks for this day yet. Tap Add to create the first one.</div>
-        )}
+        <DroppableDay dayKey={dayKey}>
+          {visibleTasks.length > 0 ? (
+            <TaskDayCellTaskList
+              tasks={visibleTasks}
+              dndDisabled={dndDisabled}
+            />
+          ) : (
+            <div css={styles.emptyState}>
+              No tasks for this day yet. Tap Add to create the first one.
+            </div>
+          )}
+        </DroppableDay>
       </div>
 
       <div css={styles.editorOverlay}>

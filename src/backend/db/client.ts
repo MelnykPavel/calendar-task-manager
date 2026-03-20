@@ -20,7 +20,12 @@ function createMongoClientPromise(): MongoClientPromise {
 
 export async function getMongoClient(): Promise<MongoClient> {
   if (!globalForMongo.__mongoClientPromise) {
-    globalForMongo.__mongoClientPromise = createMongoClientPromise();
+    globalForMongo.__mongoClientPromise = createMongoClientPromise().catch(
+      (err) => {
+        globalForMongo.__mongoClientPromise = undefined;
+        throw err;
+      },
+    );
   }
   return globalForMongo.__mongoClientPromise;
 }

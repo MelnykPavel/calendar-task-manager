@@ -39,13 +39,18 @@ export const createHolidaysSlice: Slice<HolidaysSlice> = (set, get) => ({
   holidayActions: {
     ensure: async (year, country) => {
       const key = `${year}-${country.toUpperCase()}`;
-      const s = get();
-      if (s.holidaysLoaded[key] || s.holidaysLoading[key]) return;
 
-      set((st) => ({
-        holidaysLoading: { ...st.holidaysLoading, [key]: true },
-        holidaysError: { ...st.holidaysError, [key]: null },
-      }));
+      let shouldFetch = false;
+      set((s) => {
+        if (s.holidaysLoaded[key] || s.holidaysLoading[key]) return s;
+        shouldFetch = true;
+        return {
+          holidaysLoading: { ...s.holidaysLoading, [key]: true },
+          holidaysError: { ...s.holidaysError, [key]: null },
+        };
+      });
+
+      if (!shouldFetch) return;
 
       try {
         const holidays = await getHolidays({
@@ -81,16 +86,15 @@ export const createHolidaysSlice: Slice<HolidaysSlice> = (set, get) => ({
 
     refetch: async (year, country) => {
       const key = `${year}-${country.toUpperCase()}`;
-      set((s) => {
-        return {
-          holidaysByDayKey: omitKey(s.holidaysByDayKey, key),
-          holidaysLoaded: omitKey(s.holidaysLoaded, key),
-          holidaysRevByKey: {
-            ...s.holidaysRevByKey,
-            [key]: (s.holidaysRevByKey[key] ?? 0) + 1,
-          },
-        };
-      });
+      set((s) => ({
+        holidaysByDayKey: omitKey(s.holidaysByDayKey, key),
+        holidaysLoaded: omitKey(s.holidaysLoaded, key),
+        holidaysLoading: omitKey(s.holidaysLoading, key),
+        holidaysRevByKey: {
+          ...s.holidaysRevByKey,
+          [key]: (s.holidaysRevByKey[key] ?? 0) + 1,
+        },
+      }));
       await get().holidayActions.ensure(year, country);
     },
 

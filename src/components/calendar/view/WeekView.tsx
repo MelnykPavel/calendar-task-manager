@@ -1,7 +1,7 @@
 'use client';
 
 import { useTheme } from '@emotion/react';
-import { Fragment, useMemo } from 'react';
+import { Fragment } from 'react';
 
 import TaskHourCell from '@/src/components/tasks/cell/TaskHourCell';
 import { selectWeek } from '@/src/lib/store/selectors/calendar.selectors';
@@ -16,8 +16,6 @@ export default function WeekView() {
   const theme = useTheme();
   const week = useAppStore(selectWeek);
   const themed = useWeekThemeStyles(theme);
-  const now = useMemo(() => new Date(), []);
-  const nowMinutes = now.getHours() * 60 + now.getMinutes();
   const lastColumnIndex = week.days.length - 1;
 
   return (
@@ -52,12 +50,7 @@ export default function WeekView() {
             >
               {week.weekLabels[index]}
             </div>
-            <div
-              css={[
-                styles.dayDateWrap,
-                day.isToday && styles.dayDateToday,
-              ]}
-            >
+            <div css={[styles.dayDateWrap, day.isToday && styles.dayDateToday]}>
               <div css={[styles.dayDate, themed.dayDate]}>{day.dateNumber}</div>
             </div>
           </div>
@@ -70,7 +63,6 @@ export default function WeekView() {
           <TaskHourCell
             key={`col-${index}-allDay`}
             day={day}
-            nowMinutes={nowMinutes}
             isLastColumn={index === lastColumnIndex}
           />
         ))}
@@ -83,7 +75,6 @@ export default function WeekView() {
                 key={`col-${index}-row-${rowIndex}`}
                 day={day}
                 hour={rowIndex}
-                nowMinutes={nowMinutes}
                 isLastColumn={index === lastColumnIndex}
               />
             ))}

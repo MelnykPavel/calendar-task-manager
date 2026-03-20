@@ -14,7 +14,7 @@ import {
 
 export const MOUSE_SENSOR_OPTIONS = { activationConstraint: { distance: 5 } };
 export const TOUCH_SENSOR_OPTIONS = {
-  activationConstraint: { delay: 160, tolerance: 8 },
+  activationConstraint: { delay: 250, tolerance: 5 },
 };
 
 export function isTaskDragData(data: unknown): data is TaskDragData {

@@ -17,8 +17,7 @@ const styles = {
     position: 'relative',
     height: '100%',
     minHeight: '100%',
-    transition:
-      'box-shadow 120ms ease, background-color 120ms ease',
+    transition: 'box-shadow 120ms ease, background-color 120ms ease',
   }),
   contentActive: css({
     boxShadow: 'var(--droppable-shadow-active)',
@@ -60,7 +59,8 @@ export default function DroppableDay({
 
   const isDropTarget = useDndStore(
     (state) =>
-      Boolean(state.activeTask) && state.pending?.toBucketKey === targetBucketKey,
+      Boolean(state.activeTask) &&
+      state.pending?.toBucketKey === targetBucketKey,
   );
 
   const theme = useTheme();
@@ -70,18 +70,16 @@ export default function DroppableDay({
   return (
     <div
       ref={setNodeRef}
-      data-drop-target={isOver ? 'true' : 'false'}
       data-drop-base-id={dayDropId(dayKey)}
       className={className}
       css={styles.root}
       style={{
         ...style,
         ['--droppable-shadow' as string]: theme.shadows.md,
-        ['--droppable-shadow-active' as string]:
-          `0 0 0 1px ${theme.colors.accentDark}, ${theme.shadows.md}`,
+        ['--droppable-shadow-active' as string]: `0 0 0 1px ${theme.colors.accentDark}, ${theme.shadows.md}`,
         ['--droppable-bg-active' as string]: theme.colors.accentLight,
       }}
-      >
+    >
       <div
         data-drop-id={dayDropId(dayKey)}
         css={[

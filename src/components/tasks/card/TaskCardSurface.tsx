@@ -2,6 +2,7 @@
 
 import { type DraggableAttributes } from '@dnd-kit/core';
 import { css, useTheme } from '@emotion/react';
+import { Clock, Sun } from 'lucide-react';
 import { useCallback, useMemo } from 'react';
 
 import type { Task } from '@/src/types/task';
@@ -36,6 +37,22 @@ const styles = {
     alignItems: 'flex-start',
     gap: 6,
   }),
+  meta: css({
+    width: '100%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 6,
+  }),
+  timeBadge: css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: 4,
+    fontSize: 11,
+    fontWeight: 500,
+    color: 'var(--color-ink-muted)',
+    flexShrink: 0,
+  }),
   draggingSource: css({
     opacity: 0.18,
     '@media (pointer: coarse)': {
@@ -44,7 +61,13 @@ const styles = {
   }),
 };
 
-type TaskPreview = Pick<Task, 'title' | 'dots'>;
+function formatTime(minutes: number): string {
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return `${h}:${m.toString().padStart(2, '0')}`;
+}
+
+type TaskPreview = Pick<Task, 'title' | 'dots' | 'allDay' | 'timeMinutes'>;
 type DragListeners = Record<string, unknown>;
 
 export default function TaskCardSurface({
@@ -71,6 +94,7 @@ export default function TaskCardSurface({
   style?: React.CSSProperties;
 }) {
   const theme = useTheme();
+
   const setRefs = useCallback(
     (element: HTMLDivElement | null) => {
       nodeRef?.(element);
@@ -85,7 +109,9 @@ export default function TaskCardSurface({
       ['--color-task-border' as string]: theme.colors.taskBorder,
       ['--color-task-bg' as string]: theme.colors.taskBg,
       ['--color-accent-dark' as string]: theme.colors.accentDark,
-      ['--touch-action' as string]: dndDisabled || isOverlay ? 'auto' : 'none',
+      ['--color-ink-muted' as string]: theme.colors.inkMuted,
+      ['--touch-action' as string]:
+        dndDisabled || isOverlay ? 'auto' : 'manipulation',
       ['--shadow-md' as string]: theme.shadows.md,
     }),
     [
@@ -94,6 +120,7 @@ export default function TaskCardSurface({
       theme.colors.accentDark,
       theme.colors.taskBg,
       theme.colors.taskBorder,
+      theme.colors.inkMuted,
       theme.radii.md,
       theme.shadows.md,
     ],
@@ -119,7 +146,27 @@ export default function TaskCardSurface({
       ]}
     >
       <div css={styles.content}>
-        <TaskDots dots={task.dots} />
+        <div css={styles.meta}>
+          {task.dots.length > 0 && <TaskDots dots={task.dots} />}
+          <div
+            css={[
+              styles.timeBadge,
+              task.dots.length === 0 && { marginLeft: 'auto' },
+            ]}
+          >
+            {task.allDay ? (
+              <>
+                <Sun size={11} />
+                All day
+              </>
+            ) : (
+              <>
+                <Clock size={11} />
+                {formatTime(task.timeMinutes)}
+              </>
+            )}
+          </div>
+        </div>
         <TaskTitle text={task.title} />
       </div>
     </div>

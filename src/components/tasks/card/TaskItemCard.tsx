@@ -6,12 +6,10 @@ import TaskCardSurface from './TaskCardSurface';
 
 export default function TaskItemCard({
   task,
-  index,
   dndDisabled,
   onOpen,
 }: {
   task: Task;
-  index: number;
   dndDisabled?: boolean;
   onOpen: () => void;
 }) {
@@ -19,7 +17,6 @@ export default function TaskItemCard({
     <DraggableTask
       taskId={task.id}
       bucketKey={`${task.day}|${task.bucket}`}
-      index={index}
       disabled={dndDisabled}
     >
       {({ isDragging, ref, handleRef, listeners, attributes, style }) => (

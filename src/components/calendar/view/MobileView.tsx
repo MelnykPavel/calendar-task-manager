@@ -30,11 +30,17 @@ export default function MobileView() {
   );
 
   const activeSelectedDayKey = useMemo(() => {
-    const hasSelection = month.days.some((day) => day.dayKey === selectedDayKey);
+    const hasSelection = month.days.some(
+      (day) => day.dayKey === selectedDayKey,
+    );
     return hasSelection ? selectedDayKey : getInitialSelectedDay(month);
   }, [month, selectedDayKey]);
 
-  const selectDaySummaries = useDaySummariesSelector(month.days.map((day) => day.dayKey));
+  const dayKeys = useMemo(
+    () => month.days.map((day) => day.dayKey),
+    [month.days],
+  );
+  const selectDaySummaries = useDaySummariesSelector(dayKeys);
 
   const daySummaries = useAppStore(selectDaySummaries);
 
@@ -76,9 +82,7 @@ export default function MobileView() {
         onSelectDay={setSelectedDayKey}
       />
 
-      <MobileDayPanel
-        dayKey={activeSelectedDayKey}
-      />
+      <MobileDayPanel dayKey={activeSelectedDayKey} />
     </div>
   );
 }

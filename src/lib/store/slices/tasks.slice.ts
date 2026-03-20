@@ -11,6 +11,7 @@ import { removeFromArray, insertIntoArray } from '../utils/task-order';
 import type { TasksSlice } from '../types/tasks.types';
 import type { Slice } from '../types/app.types';
 import type { TaskId, Bucket } from '../types/common';
+import { HttpError } from '../../api/http';
 
 export const createTasksSlice: Slice<TasksSlice> = (set, get) => ({
   entities: {},
@@ -52,23 +53,51 @@ export const createTasksSlice: Slice<TasksSlice> = (set, get) => ({
           bucketRev[k] = 1;
         }
 
-        set({
-          entities,
-          orderByBucket,
-          bucketByTaskId,
-          bucketRev,
-          tasksRev: get().tasksRev + 1,
-          tasksRequest: {
-            loading: false,
-            error: null,
-            inflightId: nextInflight,
-          },
+        set((s) => {
+          const pendingTemps: Record<TaskId, Task> = {};
+          const pendingTempBuckets: Record<TaskId, string> = {};
+
+          for (const id of Object.keys(s.entities) as TaskId[]) {
+            if ((id as string).startsWith('temp_')) {
+              pendingTemps[id] = s.entities[id]!;
+              const bk = s.bucketByTaskId[id];
+              if (bk) pendingTempBuckets[id] = bk;
+            }
+          }
+
+          const mergedEntities = { ...entities, ...pendingTemps };
+          const mergedBucketByTaskId = {
+            ...bucketByTaskId,
+            ...pendingTempBuckets,
+          };
+
+          const mergedOrderByBucket = { ...orderByBucket };
+          for (const [tempId, bk] of Object.entries(pendingTempBuckets)) {
+            const bucket = mergedOrderByBucket[bk] ?? [];
+            if (!bucket.includes(tempId as TaskId)) {
+              mergedOrderByBucket[bk] = [...bucket, tempId as TaskId];
+            }
+          }
+
+          return {
+            entities: mergedEntities,
+            orderByBucket: mergedOrderByBucket,
+            bucketByTaskId: mergedBucketByTaskId,
+            bucketRev,
+            tasksRev: s.tasksRev + 1,
+            tasksRequest: {
+              loading: false,
+              error: null,
+              inflightId: nextInflight,
+            },
+          };
         });
       } catch (err) {
-        if (err instanceof Error && err.name === 'AbortError') {
+        if (err instanceof HttpError && err.code === 'ABORTED') {
           set((s) => ({ tasksRequest: { ...s.tasksRequest, loading: false } }));
           return;
         }
+
         set((s) => ({
           tasksRequest: {
             ...s.tasksRequest,
@@ -176,51 +205,73 @@ export const createTasksSlice: Slice<TasksSlice> = (set, get) => ({
     },
 
     update: async (id, patch) => {
-      const updated = await updateTask(id, patch);
+      try {
+        const updated = await updateTask(id, patch);
 
-      set((s) => {
-        const prev = s.entities[id];
-        const prevKey = prev
-          ? bucketKey(prev.day, prev.bucket as Bucket)
-          : s.bucketByTaskId[id];
-        const nextKey = bucketKey(updated.day, updated.bucket as Bucket);
+        set((s) => {
+          if (!s.entities[id] && !s.bucketByTaskId[id]) return s;
 
-        const entities = { ...s.entities, [id]: updated };
-        const orderByBucket = { ...s.orderByBucket };
-        const bucketByTaskId = { ...s.bucketByTaskId };
-        const bucketRev = { ...s.bucketRev };
+          const prev = s.entities[id];
+          const prevKey = prev
+            ? bucketKey(prev.day, prev.bucket as Bucket)
+            : s.bucketByTaskId[id];
+          const nextKey = bucketKey(updated.day, updated.bucket as Bucket);
 
-        if (prevKey && prevKey !== nextKey) {
-          orderByBucket[prevKey] = removeFromArray(
-            orderByBucket[prevKey] ?? [],
-            id,
+          const entities = { ...s.entities, [id]: updated };
+          const orderByBucket = { ...s.orderByBucket };
+          const bucketByTaskId = { ...s.bucketByTaskId };
+          const bucketRev = { ...s.bucketRev };
+
+          if (prevKey && prevKey !== nextKey) {
+            orderByBucket[prevKey] = removeFromArray(
+              orderByBucket[prevKey] ?? [],
+              id,
+            );
+            bucketRev[prevKey] = (bucketRev[prevKey] ?? 0) + 1;
+          }
+
+          const nextIds = [...(orderByBucket[nextKey] ?? [])];
+          if (!nextIds.includes(id)) nextIds.push(id);
+          nextIds.sort(
+            (a, b) => (entities[a]?.order ?? 0) - (entities[b]?.order ?? 0),
           );
-          bucketRev[prevKey] = (bucketRev[prevKey] ?? 0) + 1;
-        }
+          orderByBucket[nextKey] = nextIds;
+          bucketByTaskId[id] = nextKey;
+          bucketRev[nextKey] = (bucketRev[nextKey] ?? 0) + 1;
 
-        const nextIds = [...(orderByBucket[nextKey] ?? [])];
-        if (!nextIds.includes(id)) nextIds.push(id);
-        nextIds.sort(
-          (a, b) => (entities[a]?.order ?? 0) - (entities[b]?.order ?? 0),
-        );
-        orderByBucket[nextKey] = nextIds;
-        bucketByTaskId[id] = nextKey;
-        bucketRev[nextKey] = (bucketRev[nextKey] ?? 0) + 1;
+          return {
+            entities,
+            orderByBucket,
+            bucketByTaskId,
+            bucketRev,
+            tasksRev: s.tasksRev + 1,
+          };
+        });
 
-        return {
-          entities,
-          orderByBucket,
-          bucketByTaskId,
-          bucketRev,
-          tasksRev: s.tasksRev + 1,
-        };
-      });
-
-      return updated;
+        return updated;
+      } catch (err) {
+        set((s) => ({
+          tasksRequest: {
+            ...s.tasksRequest,
+            error: (err as Error).message ?? 'Failed to update task',
+          },
+        }));
+        throw err;
+      }
     },
 
     remove: async (id) => {
-      await deleteTask(id);
+      try {
+        await deleteTask(id);
+      } catch (err) {
+        set((s) => ({
+          tasksRequest: {
+            ...s.tasksRequest,
+            error: (err as Error).message ?? 'Failed to delete task',
+          },
+        }));
+        throw err;
+      }
 
       set((s) => {
         const prev = s.entities[id];

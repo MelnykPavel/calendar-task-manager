@@ -10,7 +10,6 @@ import {
   type DragStartEvent,
   useSensor,
   useSensors,
-  rectIntersection,
 } from '@dnd-kit/core';
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { useCallback } from 'react';
@@ -21,13 +20,13 @@ import { resolveDropTarget } from '@/src/lib/store/utils/resolve-drop-target';
 import TaskDragOverlay from './TaskDragOverlay';
 import {
   getDragPointer,
-  isPointInsideBaseDrop,
-  isPointInsideExpandedDrop,
+  collisionDetection,
   isTaskDragData,
   MOUSE_SENSOR_OPTIONS,
   resolveDropTargetFromPoint,
   TOUCH_SENSOR_OPTIONS,
 } from './dnd-provider.helpers';
+
 import { useDndMotionQueues } from '@/src/hooks/useDndMotionQueues';
 
 export default function DndProvider({
@@ -70,8 +69,7 @@ export default function DndProvider({
       if (!isTaskDragData(active.data.current)) return;
 
       const pointer = getDragPointer(event);
-      const { snapshot } = useDndStore.getState();
-      const pending = useDndStore.getState().pending;
+      const { snapshot, pending } = useDndStore.getState();
 
       let target = over
         ? resolveDropTarget(over, snapshot, {
@@ -79,31 +77,6 @@ export default function DndProvider({
             pending,
           })
         : null;
-
-      const overData = over?.data.current;
-      const overTask = Boolean(overData && isTaskDragData(overData));
-
-      const insidePendingOverlay = Boolean(
-        pointer &&
-        pending &&
-        isPointInsideExpandedDrop(pending.toBucketKey, pointer),
-      );
-
-      if (insidePendingOverlay && pending) {
-        if (!target || target.toBucketKey !== pending.toBucketKey) {
-          target = {
-            toBucketKey: pending.toBucketKey,
-            toIndex: pending.toIndex,
-          };
-        }
-      }
-
-      if (!insidePendingOverlay && target && pointer && overTask) {
-        const insideBase = isPointInsideBaseDrop(target.toBucketKey, pointer);
-        if (!insideBase) {
-          target = resolveDropTargetFromPoint(pointer);
-        }
-      }
 
       if (!target && pointer) {
         target = resolveDropTargetFromPoint(pointer);
@@ -180,7 +153,8 @@ export default function DndProvider({
   return (
     <DndContext
       sensors={sensors}
-      collisionDetection={rectIntersection}
+      collisionDetection={collisionDetection}
+      autoScroll={false}
       onDragStart={handleDragStart}
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}

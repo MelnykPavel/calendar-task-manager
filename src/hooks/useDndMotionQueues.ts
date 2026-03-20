@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useRef } from 'react';
 
 import { useDndStore } from '@/src/lib/store/dnd.store';
-import { autoScrollTarget, toDropIdFromBucketKey } from '@/src/components/dnd/dnd-provider.helpers';
+import {
+  autoScrollTarget,
+  toDropIdFromBucketKey,
+} from '@/src/components/dnd/dnd-provider.helpers';
 
 type PreviewPayload = {
   taskId: string;
@@ -75,6 +78,10 @@ export function useDndMotionQueues() {
     scrollDropIdRef.current = null;
     scrollPointerYRef.current = null;
     previewPayloadRef.current = null;
+    if (scrollRafRef.current !== null) {
+      window.cancelAnimationFrame(scrollRafRef.current);
+      scrollRafRef.current = null;
+    }
     if (previewRafRef.current !== null) {
       window.cancelAnimationFrame(previewRafRef.current);
       previewRafRef.current = null;
@@ -83,8 +90,10 @@ export function useDndMotionQueues() {
 
   useEffect(
     () => () => {
-      if (scrollRafRef.current !== null) window.cancelAnimationFrame(scrollRafRef.current);
-      if (previewRafRef.current !== null) window.cancelAnimationFrame(previewRafRef.current);
+      if (scrollRafRef.current !== null)
+        window.cancelAnimationFrame(scrollRafRef.current);
+      if (previewRafRef.current !== null)
+        window.cancelAnimationFrame(previewRafRef.current);
     },
     [],
   );
