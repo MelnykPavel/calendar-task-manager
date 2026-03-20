@@ -17,7 +17,6 @@ export default function DraggableTask({
 }: {
   taskId: string;
   bucketKey: string;
-  index: number;
   disabled?: boolean;
   children: (ctx: {
     isDragging: boolean;

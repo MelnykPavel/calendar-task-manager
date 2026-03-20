@@ -18,11 +18,16 @@ export function hourFromBucket(bucket: Bucket): number | null {
 export function normalizeTimeForBucket(
   prev: { timeMinutes: number },
   toBucket: Bucket,
+
+  originalMinutes?: number,
 ): { allDay: boolean; timeMinutes: number; bucket: Bucket } {
   if (toBucket === 'allDay')
     return { allDay: true, timeMinutes: 0, bucket: 'allDay' };
   const h = hourFromBucket(toBucket);
-  const minutes = prev.timeMinutes % 60;
+
+  const minuteSource =
+    originalMinutes !== undefined ? originalMinutes : prev.timeMinutes;
+  const minutes = minuteSource % 60;
   return {
     allDay: false,
     timeMinutes: (h ?? 0) * 60 + minutes,

@@ -38,7 +38,11 @@ export function applyDndOverlay(
   const originalTask = snapshot.entities[taskId];
   if (!originalTask) return base;
 
-  const normalized = normalizeTimeForBucket(originalTask, toBucket as Bucket);
+  const normalized = normalizeTimeForBucket(
+    originalTask,
+    toBucket as Bucket,
+    originalTask.timeMinutes,
+  );
   const overlayTask: Task = { ...originalTask, day: toDay, ...normalized };
 
   let allDay = base.allDay;

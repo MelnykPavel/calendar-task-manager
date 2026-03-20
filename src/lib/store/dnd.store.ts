@@ -219,6 +219,6 @@ export const useDndStore = create<DndStore>()((set, get) => ({
     },
 
     rollback: () => get().dndActions._clear(),
-    _clear: () => set(INITIAL),
+    _clear: () => set((s) => ({ ...INITIAL, commitVersion: s.commitVersion })),
   },
 }));

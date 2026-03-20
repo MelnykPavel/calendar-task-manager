@@ -60,7 +60,6 @@ export default function TaskDayCellTaskList({
             <TaskItemCard
               key={task.id}
               task={task}
-              index={index}
               dndDisabled={dndDisabled}
               onOpen={() => openView(task.id)}
             />
